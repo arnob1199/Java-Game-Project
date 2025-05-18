@@ -1,11 +1,15 @@
 import java.awt.*;
 import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.Random;
 import javax.swing.*;
 
 public class DoodleJump extends JPanel implements ActionListener, KeyListener {
 
     private Player player;
     private Timer timer;
+    private ArrayList<Platform> platforms;
+    private Random rand;
 
     public DoodleJump() {
 
@@ -14,17 +18,26 @@ public class DoodleJump extends JPanel implements ActionListener, KeyListener {
         setFocusable(true);
         addKeyListener(this);
 
+        rand = new Random();
         player = new Player(175, 550);
+        platforms = new ArrayList<>();
+        generatePlatforms();
 
         timer = new Timer(20, this);
         timer.start();
     }
 
-    @Override
-    protected void paintComponent(Graphics g) {
+    private void generatePlatforms() {
 
-        super.paintComponent(g);
-        player.draw(g);
+        platforms.clear();
+        int y = 550;
+
+        while (y > 0) {
+
+            int x = rand.nextInt(300);
+            platforms.add(new Platform(x, y));
+            y -= rand.nextInt(40) + 60;
+        }
     }
 
     @Override
@@ -32,6 +45,19 @@ public class DoodleJump extends JPanel implements ActionListener, KeyListener {
 
         player.update();
         repaint();
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+
+        super.paintComponent(g);
+
+        player.draw(g);
+
+        for (Platform p : platforms) {
+
+            p.draw(g);
+        }
     }
 
     @Override
@@ -43,6 +69,7 @@ public class DoodleJump extends JPanel implements ActionListener, KeyListener {
 
             player.moveLeft();
         } 
+        
         else if (code == KeyEvent.VK_RIGHT || code == KeyEvent.VK_D) {
 
             player.moveRight();
@@ -51,7 +78,7 @@ public class DoodleJump extends JPanel implements ActionListener, KeyListener {
 
     @Override
     public void keyReleased(KeyEvent e) {
-        
+
         int code = e.getKeyCode();
         if (code == KeyEvent.VK_LEFT || code == KeyEvent.VK_RIGHT ||
             code == KeyEvent.VK_A || code == KeyEvent.VK_D) {
@@ -85,15 +112,8 @@ public class DoodleJump extends JPanel implements ActionListener, KeyListener {
 
             x += xVelocity;
 
-            if (x > 400) 
-            {
-                x = -width;
-            }
-
-            if (x + width < 0) 
-            {
-                x = 400;
-            }
+            if (x > 400) x = -width;
+            else if (x + width < 0) x = 400;
         }
 
         public void moveLeft() {
@@ -114,6 +134,24 @@ public class DoodleJump extends JPanel implements ActionListener, KeyListener {
         public void draw(Graphics g) {
 
             g.setColor(Color.GREEN);
+            g.fillRect(x, y, width, height);
+        }
+    }
+
+    class Platform {
+
+        private int x, y;
+        private int width = 60, height = 10;
+
+        public Platform(int x, int y) {
+
+            this.x = x;
+            this.y = y;
+        }
+
+        public void draw(Graphics g) {
+
+            g.setColor(Color.BLACK);
             g.fillRect(x, y, width, height);
         }
     }
