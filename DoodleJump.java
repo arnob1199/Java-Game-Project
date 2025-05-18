@@ -7,9 +7,11 @@ import javax.swing.*;
 public class DoodleJump extends JPanel implements ActionListener, KeyListener {
 
     private Player player;
-    private Timer timer;
     private ArrayList<Platform> platforms;
+    private Timer timer;
     private Random rand;
+
+    private boolean hasLanded = false;
 
     public DoodleJump() {
 
@@ -43,8 +45,37 @@ public class DoodleJump extends JPanel implements ActionListener, KeyListener {
     @Override
     public void actionPerformed(ActionEvent e) {
 
+        if (!hasLanded) {
+
+            if (player.getY() >= 550 && player.getVelocityY() > 0) {
+
+                player.jump();
+            }
+        }
+
         player.update();
+        checkPlatformCollision();
         repaint();
+    }
+
+    private void checkPlatformCollision() {
+
+        Rectangle playerRect = new Rectangle(player.getX(), player.getY(), 50, 50);
+
+        for (Platform p : platforms) {
+            
+            if (playerRect.intersects(p.getBounds()) && player.getVelocityY() > 0) {
+
+                player.jump();
+
+                if (!hasLanded) {
+
+                    hasLanded = true;
+                }
+
+                break;
+            }
+        }
     }
 
     @Override
@@ -80,9 +111,10 @@ public class DoodleJump extends JPanel implements ActionListener, KeyListener {
     public void keyReleased(KeyEvent e) {
 
         int code = e.getKeyCode();
+
         if (code == KeyEvent.VK_LEFT || code == KeyEvent.VK_RIGHT ||
             code == KeyEvent.VK_A || code == KeyEvent.VK_D) {
-
+                
             player.stop();
         }
     }
@@ -96,6 +128,7 @@ public class DoodleJump extends JPanel implements ActionListener, KeyListener {
         private int width = 50, height = 50;
         private int velocityY = 0;
         private int gravity = 1;
+        private int jumpStrength = -15;
         private int xVelocity = 0;
         private int speed = 5;
 
@@ -109,11 +142,22 @@ public class DoodleJump extends JPanel implements ActionListener, KeyListener {
 
             velocityY += gravity;
             y += velocityY;
-
             x += xVelocity;
 
-            if (x > 400) x = -width;
-            else if (x + width < 0) x = 400;
+            if (x > 400) {
+
+                x = -width;
+            }
+
+            else if(x + width < 0){
+                
+                x = 400;
+            }
+        }
+
+        public void jump() {
+
+            velocityY = jumpStrength;
         }
 
         public void moveLeft() {
@@ -129,6 +173,21 @@ public class DoodleJump extends JPanel implements ActionListener, KeyListener {
         public void stop() {
 
             xVelocity = 0;
+        }
+
+        public int getX() {
+
+            return x;
+        }
+
+        public int getY() {
+
+            return y;
+        }
+
+        public int getVelocityY() {
+
+            return velocityY;
         }
 
         public void draw(Graphics g) {
@@ -153,6 +212,11 @@ public class DoodleJump extends JPanel implements ActionListener, KeyListener {
 
             g.setColor(Color.BLACK);
             g.fillRect(x, y, width, height);
+        }
+
+        public Rectangle getBounds() {
+
+            return new Rectangle(x, y, width, height);
         }
     }
 
