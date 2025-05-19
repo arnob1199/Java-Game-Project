@@ -12,6 +12,7 @@ public class DoodleJump extends JPanel implements ActionListener, KeyListener {
     private Random rand;
 
     private boolean hasLanded = false;
+    private boolean isGameOver = false;
     private int score = 0;
 
     public DoodleJump() {
@@ -22,11 +23,23 @@ public class DoodleJump extends JPanel implements ActionListener, KeyListener {
         addKeyListener(this);
 
         rand = new Random();
+        startGame();
+    }
+
+    private void startGame() {
+
         player = new Player(175, 550);
         platforms = new ArrayList<>();
         generatePlatforms();
+        score = 0;
+        hasLanded = false;
+        isGameOver = false;
 
-        timer = new Timer(20, this);
+        if (timer == null) {
+
+            timer = new Timer(20, this);
+        }
+
         timer.start();
     }
 
@@ -46,6 +59,10 @@ public class DoodleJump extends JPanel implements ActionListener, KeyListener {
     @Override
     public void actionPerformed(ActionEvent e) {
 
+        if (isGameOver) {
+            return;
+        }
+
         if (!hasLanded) {
 
             if (player.getY() >= 550 && player.getVelocityY() > 0) {
@@ -61,14 +78,20 @@ public class DoodleJump extends JPanel implements ActionListener, KeyListener {
             scrollWorld();
         }
 
+        if (hasLanded && player.getY() > 600) {
+
+            isGameOver = true;
+            timer.stop();
+        }
+
         checkPlatformCollision();
         repaint();
     }
 
     private void scrollWorld() {
 
-        int dy = 250 - player.getY(); 
-        player.setY(250);         
+        int dy = 250 - player.getY();
+        player.setY(250);
 
         score += dy;
 
@@ -92,8 +115,14 @@ public class DoodleJump extends JPanel implements ActionListener, KeyListener {
         for (Platform p : platforms) {
 
             if (playerRect.intersects(p.getBounds()) && player.getVelocityY() > 0) {
+                
                 player.jump();
-                if (!hasLanded) hasLanded = true;
+
+                if (!hasLanded){
+
+                     hasLanded = true;
+                }
+
                 break;
             }
         }
@@ -114,6 +143,17 @@ public class DoodleJump extends JPanel implements ActionListener, KeyListener {
         g.setColor(Color.BLACK);
         g.setFont(new Font("Arial", Font.BOLD, 20));
         g.drawString("Score: " + score, 10, 20);
+
+        if (isGameOver) {
+
+            g.setColor(Color.RED);
+            g.setFont(new Font("Arial", Font.BOLD, 36));
+            g.drawString("GAME OVER", 90, 280);
+
+            g.setFont(new Font("Arial", Font.PLAIN, 20));
+            g.drawString("Final Score: " + score, 120, 320);
+            g.drawString("Press R to Restart", 105, 360);
+        }
     }
 
     @Override
@@ -121,10 +161,16 @@ public class DoodleJump extends JPanel implements ActionListener, KeyListener {
 
         int code = e.getKeyCode();
 
+        if (isGameOver && code == KeyEvent.VK_R) {
+
+            startGame();
+        }
+
         if (code == KeyEvent.VK_LEFT || code == KeyEvent.VK_A) {
 
             player.moveLeft();
         } 
+        
         else if (code == KeyEvent.VK_RIGHT || code == KeyEvent.VK_D) {
 
             player.moveRight();
@@ -135,6 +181,7 @@ public class DoodleJump extends JPanel implements ActionListener, KeyListener {
     public void keyReleased(KeyEvent e) {
 
         int code = e.getKeyCode();
+
         if (code == KeyEvent.VK_LEFT || code == KeyEvent.VK_RIGHT ||
             code == KeyEvent.VK_A || code == KeyEvent.VK_D) {
 
@@ -167,14 +214,14 @@ public class DoodleJump extends JPanel implements ActionListener, KeyListener {
             y += velocityY;
             x += xVelocity;
 
-            if (x > 400) {
-                
+            if (x > 400){
+
                 x = -width;
             }
 
             else if (x + width < 0){
 
-             x = 400;
+                x = 400;
             }
         }
 
@@ -239,9 +286,9 @@ public class DoodleJump extends JPanel implements ActionListener, KeyListener {
     public static void main(String[] args) {
 
         JFrame frame = new JFrame("Doodle Jump");
-        DoodleJump panel = new DoodleJump();
+        DoodleJump game = new DoodleJump();
 
-        frame.add(panel);
+        frame.add(game);
         frame.pack();
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setResizable(false);
