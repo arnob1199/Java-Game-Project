@@ -12,6 +12,7 @@ public class DoodleJump extends JPanel implements ActionListener, KeyListener {
     private Random rand;
 
     private boolean hasLanded = false;
+    private int score = 0;
 
     public DoodleJump() {
 
@@ -54,8 +55,34 @@ public class DoodleJump extends JPanel implements ActionListener, KeyListener {
         }
 
         player.update();
+
+        if (hasLanded && player.getY() < 250) {
+
+            scrollWorld();
+        }
+
         checkPlatformCollision();
         repaint();
+    }
+
+    private void scrollWorld() {
+
+        int dy = 250 - player.getY(); 
+        player.setY(250);         
+
+        score += dy;
+
+        for (int i = 0; i < platforms.size(); i++) {
+
+            Platform p = platforms.get(i);
+            p.setY(p.getY() + dy);
+
+            if (p.getY() > 600) {
+
+                platforms.remove(i);
+                platforms.add(0, new Platform(rand.nextInt(300), 0));
+            }
+        }
     }
 
     private void checkPlatformCollision() {
@@ -63,16 +90,10 @@ public class DoodleJump extends JPanel implements ActionListener, KeyListener {
         Rectangle playerRect = new Rectangle(player.getX(), player.getY(), 50, 50);
 
         for (Platform p : platforms) {
-            
+
             if (playerRect.intersects(p.getBounds()) && player.getVelocityY() > 0) {
-
                 player.jump();
-
-                if (!hasLanded) {
-
-                    hasLanded = true;
-                }
-
+                if (!hasLanded) hasLanded = true;
                 break;
             }
         }
@@ -89,6 +110,10 @@ public class DoodleJump extends JPanel implements ActionListener, KeyListener {
 
             p.draw(g);
         }
+
+        g.setColor(Color.BLACK);
+        g.setFont(new Font("Arial", Font.BOLD, 20));
+        g.drawString("Score: " + score, 10, 20);
     }
 
     @Override
@@ -100,7 +125,6 @@ public class DoodleJump extends JPanel implements ActionListener, KeyListener {
 
             player.moveLeft();
         } 
-        
         else if (code == KeyEvent.VK_RIGHT || code == KeyEvent.VK_D) {
 
             player.moveRight();
@@ -111,10 +135,9 @@ public class DoodleJump extends JPanel implements ActionListener, KeyListener {
     public void keyReleased(KeyEvent e) {
 
         int code = e.getKeyCode();
-
         if (code == KeyEvent.VK_LEFT || code == KeyEvent.VK_RIGHT ||
             code == KeyEvent.VK_A || code == KeyEvent.VK_D) {
-                
+
             player.stop();
         }
     }
@@ -145,13 +168,13 @@ public class DoodleJump extends JPanel implements ActionListener, KeyListener {
             x += xVelocity;
 
             if (x > 400) {
-
+                
                 x = -width;
             }
 
-            else if(x + width < 0){
-                
-                x = 400;
+            else if (x + width < 0){
+
+             x = 400;
             }
         }
 
@@ -175,20 +198,10 @@ public class DoodleJump extends JPanel implements ActionListener, KeyListener {
             xVelocity = 0;
         }
 
-        public int getX() {
-
-            return x;
-        }
-
-        public int getY() {
-
-            return y;
-        }
-
-        public int getVelocityY() {
-
-            return velocityY;
-        }
+        public int getX() { return x; }
+        public int getY() { return y; }
+        public void setY(int y) { this.y = y; }
+        public int getVelocityY() { return velocityY; }
 
         public void draw(Graphics g) {
 
@@ -218,6 +231,9 @@ public class DoodleJump extends JPanel implements ActionListener, KeyListener {
 
             return new Rectangle(x, y, width, height);
         }
+
+        public int getY() { return y; }
+        public void setY(int y) { this.y = y; }
     }
 
     public static void main(String[] args) {
