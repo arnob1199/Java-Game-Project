@@ -123,24 +123,34 @@ public class DoodleJump extends JPanel implements ActionListener, KeyListener {
         }
     }
 
-    private void checkPlatformCollision() {
+   private void checkPlatformCollision() {
 
-        Rectangle playerBounds = new Rectangle(player.getX(), player.getY(), 75, 75);
+    int playerBottom = player.getY() + 75;
+    int playerLeft = player.getX();
+    int playerRight = player.getX() + 75;
+    
+    for (Platform p : platforms) {
 
-        for (Platform p : platforms) {
+        int platTop = p.getY();
+        int platLeft = p.getX();
+        int platRight = p.getX() + 90;
 
-            if (playerBounds.intersects(p.getBounds()) && player.getVelocityY() > 0) {
+        if (player.getVelocityY() > 0 &&
+            playerBottom >= platTop && playerBottom <= platTop + 15 &&
+            playerRight > platLeft && playerLeft < platRight) {
 
-                player.jump();
-                if (!hasLanded) {
+            player.jump();
 
-                    hasLanded = true;
-                }
+            if (!hasLanded) {
 
-                break;
+                hasLanded = true;
             }
+            
+            break;
         }
     }
+}
+
 
     @Override
     protected void paintComponent(Graphics g) {
