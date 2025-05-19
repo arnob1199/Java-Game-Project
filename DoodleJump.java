@@ -1,7 +1,11 @@
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Random;
+import javax.imageio.ImageIO;
 import javax.swing.*;
 
 public class DoodleJump extends JPanel implements ActionListener, KeyListener {
@@ -15,20 +19,34 @@ public class DoodleJump extends JPanel implements ActionListener, KeyListener {
     private boolean isGameOver = false;
     private int score = 0;
 
+    private BufferedImage backgroundImage;
+    private BufferedImage playerImage;
+    private BufferedImage platformImage;
+
     public DoodleJump() {
 
-        setPreferredSize(new Dimension(400, 600));
-        setBackground(Color.cyan);
+        setPreferredSize(new Dimension(600, 800));
         setFocusable(true);
         addKeyListener(this);
-
         rand = new Random();
+
+        try {
+
+            backgroundImage = ImageIO.read(new File("background.png"));
+            playerImage = ImageIO.read(new File("player.png"));
+            platformImage = ImageIO.read(new File("platform.png"));
+        } 
+        catch (IOException e) {
+
+            System.out.println("Image loading failed: " + e.getMessage());
+        }
+
         startGame();
     }
 
     private void startGame() {
 
-        player = new Player(175, 550);
+        player = new Player(262, 725, playerImage);
         platforms = new ArrayList<>();
         generatePlatforms();
         score = 0;
@@ -46,13 +64,13 @@ public class DoodleJump extends JPanel implements ActionListener, KeyListener {
     private void generatePlatforms() {
 
         platforms.clear();
-        int y = 550;
+        int y = 750;
 
         while (y > 0) {
 
-            int x = rand.nextInt(300);
-            platforms.add(new Platform(x, y));
-            y -= rand.nextInt(40) + 60;
+            int x = rand.nextInt(510);
+            platforms.add(new Platform(x, y, platformImage));
+            y -= rand.nextInt(70) + 50;
         }
     }
 
@@ -60,25 +78,23 @@ public class DoodleJump extends JPanel implements ActionListener, KeyListener {
     public void actionPerformed(ActionEvent e) {
 
         if (isGameOver) {
+
             return;
         }
 
-        if (!hasLanded) {
+        if (!hasLanded && player.getY() >= 725 && player.getVelocityY() > 0) {
 
-            if (player.getY() >= 550 && player.getVelocityY() > 0) {
-
-                player.jump();
-            }
+            player.jump();
         }
 
         player.update();
 
-        if (hasLanded && player.getY() < 250) {
+        if (hasLanded && player.getY() < 300) {
 
             scrollWorld();
         }
 
-        if (hasLanded && player.getY() > 600) {
+        if (hasLanded && player.getY() > 800) {
 
             isGameOver = true;
             timer.stop();
@@ -90,9 +106,8 @@ public class DoodleJump extends JPanel implements ActionListener, KeyListener {
 
     private void scrollWorld() {
 
-        int dy = 250 - player.getY();
-        player.setY(250);
-
+        int dy = 300 - player.getY();
+        player.setY(300);
         score += dy;
 
         for (int i = 0; i < platforms.size(); i++) {
@@ -100,27 +115,26 @@ public class DoodleJump extends JPanel implements ActionListener, KeyListener {
             Platform p = platforms.get(i);
             p.setY(p.getY() + dy);
 
-            if (p.getY() > 600) {
+            if (p.getY() > 800) {
 
                 platforms.remove(i);
-                platforms.add(0, new Platform(rand.nextInt(300), 0));
+                platforms.add(0, new Platform(rand.nextInt(510), 0, platformImage));
             }
         }
     }
 
     private void checkPlatformCollision() {
 
-        Rectangle playerRect = new Rectangle(player.getX(), player.getY(), 50, 50);
+        Rectangle playerBounds = new Rectangle(player.getX(), player.getY(), 75, 75);
 
         for (Platform p : platforms) {
 
-            if (playerRect.intersects(p.getBounds()) && player.getVelocityY() > 0) {
-                
+            if (playerBounds.intersects(p.getBounds()) && player.getVelocityY() > 0) {
+
                 player.jump();
+                if (!hasLanded) {
 
-                if (!hasLanded){
-
-                     hasLanded = true;
+                    hasLanded = true;
                 }
 
                 break;
@@ -133,12 +147,18 @@ public class DoodleJump extends JPanel implements ActionListener, KeyListener {
 
         super.paintComponent(g);
 
-        player.draw(g);
+        if (backgroundImage != null) {
 
-        for (Platform p : platforms) {
+            g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), null);
+        } 
+        else {
 
-            p.draw(g);
+            g.setColor(Color.cyan);
+            g.fillRect(0, 0, getWidth(), getHeight());
         }
+
+        player.draw(g);
+        for (Platform p : platforms) p.draw(g);
 
         g.setColor(Color.BLACK);
         g.setFont(new Font("Arial", Font.BOLD, 20));
@@ -146,13 +166,12 @@ public class DoodleJump extends JPanel implements ActionListener, KeyListener {
 
         if (isGameOver) {
 
-            g.setColor(Color.RED);
+            g.setColor(Color.WHITE);
             g.setFont(new Font("Arial", Font.BOLD, 36));
-            g.drawString("GAME OVER", 90, 280);
-
+            g.drawString("GAME OVER", 170, 380);
             g.setFont(new Font("Arial", Font.PLAIN, 20));
-            g.drawString("Final Score: " + score, 120, 320);
-            g.drawString("Press R to Restart", 105, 360);
+            g.drawString("Final Score: " + score, 220, 420);
+            g.drawString("Press R to Restart", 200, 460);
         }
     }
 
@@ -170,7 +189,6 @@ public class DoodleJump extends JPanel implements ActionListener, KeyListener {
 
             player.moveLeft();
         } 
-        
         else if (code == KeyEvent.VK_RIGHT || code == KeyEvent.VK_D) {
 
             player.moveRight();
@@ -195,17 +213,19 @@ public class DoodleJump extends JPanel implements ActionListener, KeyListener {
     class Player {
 
         private int x, y;
-        private int width = 50, height = 50;
+        private int width = 75, height = 75;
         private int velocityY = 0;
         private int gravity = 1;
-        private int jumpStrength = -15;
+        private int jumpStrength = -20;
         private int xVelocity = 0;
         private int speed = 5;
+        private BufferedImage image;
 
-        public Player(int x, int y) {
+        public Player(int x, int y, BufferedImage img) {
 
             this.x = x;
             this.y = y;
+            this.image = img;
         }
 
         public void update() {
@@ -214,14 +234,13 @@ public class DoodleJump extends JPanel implements ActionListener, KeyListener {
             y += velocityY;
             x += xVelocity;
 
-            if (x > 400){
+            if (x > 600) {
 
                 x = -width;
             }
+            else if (x + width < 0) {
 
-            else if (x + width < 0){
-
-                x = 400;
+                x = 600;
             }
         }
 
@@ -252,26 +271,42 @@ public class DoodleJump extends JPanel implements ActionListener, KeyListener {
 
         public void draw(Graphics g) {
 
-            g.setColor(Color.GREEN);
-            g.fillRect(x, y, width, height);
+            if (image != null) {
+
+                g.drawImage(image, x, y, width, height, null);
+            } 
+            else {
+
+                g.setColor(Color.GREEN);
+                g.fillRect(x, y, width, height);
+            }
         }
     }
 
     class Platform {
 
         private int x, y;
-        private int width = 60, height = 10;
+        private int width = 90, height = 15;
+        private BufferedImage image;
 
-        public Platform(int x, int y) {
+        public Platform(int x, int y, BufferedImage img) {
 
             this.x = x;
             this.y = y;
+            this.image = img;
         }
 
         public void draw(Graphics g) {
 
-            g.setColor(Color.BLACK);
-            g.fillRect(x, y, width, height);
+            if (image != null) {
+
+                g.drawImage(image, x, y, width, height, null);
+            } 
+            else {
+
+                g.setColor(Color.BLACK);
+                g.fillRect(x, y, width, height);
+            }
         }
 
         public Rectangle getBounds() {
@@ -281,13 +316,13 @@ public class DoodleJump extends JPanel implements ActionListener, KeyListener {
 
         public int getY() { return y; }
         public void setY(int y) { this.y = y; }
+        public int getX() { return x; }
     }
 
     public static void main(String[] args) {
-
+        
         JFrame frame = new JFrame("Doodle Jump");
         DoodleJump game = new DoodleJump();
-
         frame.add(game);
         frame.pack();
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
