@@ -123,34 +123,33 @@ public class DoodleJump extends JPanel implements ActionListener, KeyListener {
         }
     }
 
-   private void checkPlatformCollision() {
+    private void checkPlatformCollision() {
 
-    int playerBottom = player.getY() + 75;
-    int playerLeft = player.getX();
-    int playerRight = player.getX() + 75;
-    
-    for (Platform p : platforms) {
+        int playerBottom = player.getY() + Player.HEIGHT;
+        int playerLeft = player.getX();
+        int playerRight = player.getX() + Player.WIDTH;
 
-        int platTop = p.getY();
-        int platLeft = p.getX();
-        int platRight = p.getX() + 90;
+        for (Platform p : platforms) {
 
-        if (player.getVelocityY() > 0 &&
-            playerBottom >= platTop && playerBottom <= platTop + 15 &&
-            playerRight > platLeft && playerLeft < platRight) {
+            int platTop = p.getY();
+            int platLeft = p.getX();
+            int platRight = p.getX() + Platform.WIDTH;
 
-            player.jump();
+            if (player.getVelocityY() > 0 &&
+                playerBottom >= platTop && playerBottom <= platTop + Platform.HEIGHT &&
+                playerRight > platLeft && playerLeft < platRight) {
 
-            if (!hasLanded) {
+                player.jump();
 
-                hasLanded = true;
+                if (!hasLanded) {
+
+                    hasLanded = true;
+                }
+
+                break;
             }
-            
-            break;
         }
     }
-}
-
 
     @Override
     protected void paintComponent(Graphics g) {
@@ -220,35 +219,59 @@ public class DoodleJump extends JPanel implements ActionListener, KeyListener {
     @Override
     public void keyTyped(KeyEvent e) {}
 
-    class Player {
+    interface Movable {
 
-        private int x, y;
-        private int width = 75, height = 75;
-        private int velocityY = 0;
-        private int gravity = 1;
-        private int jumpStrength = -20;
-        private int xVelocity = 0;
-        private int speed = 5;
-        private BufferedImage image;
+        void moveLeft();
+        void moveRight();
+        void stop();
+    }
 
-        public Player(int x, int y, BufferedImage img) {
+    abstract class Game {
+
+        protected int x, y;
+        protected BufferedImage image;
+
+        public Game(int x, int y, BufferedImage img) {
 
             this.x = x;
             this.y = y;
             this.image = img;
         }
 
+        public abstract void draw(Graphics g);
+
+        public int getX() { return x; }
+        public int getY() { return y; }
+        public void setY(int y) { this.y = y; }
+    }
+
+    class Player extends Game implements Movable {
+
+        public static final int WIDTH = 75;
+        public static final int HEIGHT = 75;
+        private static final int GRAVITY = 1;
+        private static final int JUMP_STRENGTH = -20;
+        private static final int SPEED = 5;
+
+        private int velocityY = 0;
+        private int xVelocity = 0;
+
+        public Player(int x, int y, BufferedImage img) {
+
+            super(x, y, img);
+        }
+
         public void update() {
 
-            velocityY += gravity;
+            velocityY += GRAVITY;
             y += velocityY;
             x += xVelocity;
 
             if (x > 600) {
 
-                x = -width;
+                x = -WIDTH;
             }
-            else if (x + width < 0) {
+            else if (x + WIDTH < 0) {
 
                 x = 600;
             }
@@ -256,76 +279,69 @@ public class DoodleJump extends JPanel implements ActionListener, KeyListener {
 
         public void jump() {
 
-            velocityY = jumpStrength;
+            velocityY = JUMP_STRENGTH;
         }
-
-        public void moveLeft() {
-
-            xVelocity = -speed;
-        }
-
-        public void moveRight() {
-
-            xVelocity = speed;
-        }
-
-        public void stop() {
-
-            xVelocity = 0;
-        }
-
-        public int getX() { return x; }
-        public int getY() { return y; }
-        public void setY(int y) { this.y = y; }
-        public int getVelocityY() { return velocityY; }
 
         public void draw(Graphics g) {
 
             if (image != null) {
 
-                g.drawImage(image, x, y, width, height, null);
+                g.drawImage(image, x, y, WIDTH, HEIGHT, null);
             } 
             else {
 
                 g.setColor(Color.GREEN);
-                g.fillRect(x, y, width, height);
+                g.fillRect(x, y, WIDTH, HEIGHT);
             }
+        }
+
+        public int getVelocityY() { return velocityY; }
+
+        @Override
+        public void moveLeft() {
+
+            xVelocity = -SPEED;
+        }
+
+        @Override
+        public void moveRight() {
+
+            xVelocity = SPEED;
+        }
+
+        @Override
+        public void stop() {
+
+            xVelocity = 0;
         }
     }
 
-    class Platform {
+    class Platform extends Game {
 
-        private int x, y;
-        private int width = 90, height = 15;
-        private BufferedImage image;
+        public static final int WIDTH = 90;
+        public static final int HEIGHT = 15;
 
         public Platform(int x, int y, BufferedImage img) {
 
-            this.x = x;
-            this.y = y;
-            this.image = img;
+            super(x, y, img);
         }
 
         public void draw(Graphics g) {
 
             if (image != null) {
 
-                g.drawImage(image, x, y, width, height, null);
+                g.drawImage(image, x, y, WIDTH, HEIGHT, null);
             } 
             else {
 
                 g.setColor(Color.BLACK);
-                g.fillRect(x, y, width, height);
+                g.fillRect(x, y, WIDTH, HEIGHT);
             }
         }
-
-        public int getY() { return y; }
-        public void setY(int y) { this.y = y; }
-        public int getX() { return x; }
     }
 
     public static void main(String[] args) {
-        
+
         JFrame frame = new JFrame("Doodle Jump");
         DoodleJump game = new DoodleJump();
         frame.add(game);
