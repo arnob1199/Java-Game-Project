@@ -319,11 +319,6 @@ public class DoodleJump extends JPanel implements ActionListener, KeyListener {
             }
         }
 
-        public Rectangle getBounds() {
-
-            return new Rectangle(x, y, width, height);
-        }
-
         public int getY() { return y; }
         public void setY(int y) { this.y = y; }
         public int getX() { return x; }
